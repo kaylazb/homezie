@@ -1,0 +1,135 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String       @id @default(uuid())
+  name        String
+  email       String       @unique
+  password    String
+  role        Role         @default(CUSTOMER)
+  wallet      Wallet?
+  topups      Topup[]
+  withdrawals Withdrawal[]
+  bookings    Booking[]
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+  DRIVER
+}
+
+model Wallet {
+  id           String              @id @default(uuid())
+  userId       String              @unique
+  user         User                @relation(fields: [userId], references: [id])
+  balance      Int                 @default(0)
+  transactions WalletTransaction[]
+}
+
+model WalletTransaction {
+  id        String   @id @default(uuid())
+  walletId  String
+  wallet    Wallet   @relation(fields: [walletId], references: [id])
+  amount    Int
+  type      String // TOPUP, PAYMENT, WITHDRAW, REFUND
+  reference String
+  createdAt DateTime @default(now())
+}
+
+model Topup {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  amount    Int
+  status    String
+  createdAt DateTime @default(now())
+}
+
+model Withdrawal {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  amount        Int
+  bankCode      String
+  accountNumber String
+  status        String
+  createdAt     DateTime @default(now())
+}
+
+model BusClass {
+  id          String @id @default(uuid())
+  name        String
+  description String
+  buses       Bus[]
+}
+
+model Bus {
+  id         String     @id @default(uuid())
+  name       String
+  capacity   Int
+  busClassId String
+  busClass   BusClass   @relation(fields: [busClassId], references: [id])
+  schedules  Schedule[]
+}
+
+model Route {
+  id          String     @id @default(uuid())
+  origin      String
+  destination String
+  schedules   Schedule[]
+}
+
+model Schedule {
+  id        String    @id @default(uuid())
+  busId     String
+  routeId   String
+  departure DateTime
+  arrival   DateTime
+  price     Int
+  bus       Bus       @relation(fields: [busId], references: [id])
+  route     Route     @relation(fields: [routeId], references: [id])
+  bookings  Booking[]
+}
+
+model Booking {
+  id          String        @id @default(uuid())
+  userId      String
+  scheduleId  String
+  totalAmount Int
+  status      String // PENDING, PAID, CANCELED
+  createdAt   DateTime      @default(now())
+  user        User          @relation(fields: [userId], references: [id])
+  schedule    Schedule      @relation(fields: [scheduleId], references: [id])
+  seats       BookingSeat[]
+  Payment     Payment?
+}
+
+model BookingSeat {
+  id         String  @id @default(uuid())
+  bookingId  String
+  seatNumber String
+  booking    Booking @relation(fields: [bookingId], references: [id])
+}
+
+model Payment {
+  id        String   @id @default(uuid())
+  bookingId String   @unique
+  amount    Int
+  status    String // PENDING, SUCCESS, FAILED
+  createdAt DateTime @default(now())
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+}
