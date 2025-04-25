@@ -12,7 +12,7 @@ export class CreateUserDto {
   @IsString()
   password: string;
 
-  @IsOptional()
+
   @IsPhoneNumber('ID') // kamu bisa ubah 'ID' ke kode negara lain jika perlu
   phone_number: string;
 
@@ -26,13 +26,13 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsDateString()
-  birthdate?: string;
+  birthdate?: Date;
 
   @IsOptional()
   @IsString()
   address?: string;
 
-  @IsOptional()
+
   @IsString()
   role?: 'ADMIN' | 'CUSTOMER' | 'DRIVER';
 

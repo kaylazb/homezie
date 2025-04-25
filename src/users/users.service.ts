@@ -9,8 +9,16 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createUserDto: CreateUserDto) {
-    return this.prisma.user.create({ data: createUserDto });
+  async create(dto: CreateUserDto) {
+
+    return this.prisma.user.create({
+      data: {
+        name: dto.name,
+        email: dto.email,
+        password: dto.password,
+        phone_number: dto.phone_number,
+      },
+    });
   }
 
   async findAll() {

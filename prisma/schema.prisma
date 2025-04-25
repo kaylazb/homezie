@@ -18,13 +18,13 @@ model User {
   name              String
   email             String    @unique
   password          String
-  phone_number      String
+  phone_number      String?
   profile_picture   String?
-  gender            String
-  birthdate         DateTime
-  address           String
+  gender            String?
+  birthdate         DateTime?
+  address           String?
   role              String    @default("CUSTOMER")
-  is_verified       Boolean   @default(false)
+  is_verified       Boolean?   @default(false)
   verification_token String?
   last_login        DateTime?
   login_attempts    Int       @default(0)
