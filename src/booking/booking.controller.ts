@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { BookingService } from './booking.service';
-import { CreateBookingDto } from './dto/create-booking.dot';
-import { UpdateBookingDto } from './dto/update-booking.tdo';
+import { CreateBookingDto, UpdateBookingDto, createBookingSchema, updateBookingSchema } from './dto/create-booking.dot';
+import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
+
 
 
 @Controller('bookings')
@@ -9,7 +10,7 @@ export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
   @Post()
-  create(@Body() dto: CreateBookingDto) {
+  create(@Body( new ZodValidationPipe(createBookingSchema)) dto: CreateBookingDto) {
     return this.bookingService.create(dto);
   }
 
@@ -24,7 +25,7 @@ export class BookingController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateBookingDto) {
+  update(@Param('id') id: string, @Body( new ZodValidationPipe(updateBookingSchema)) dto: UpdateBookingDto) {
     return this.bookingService.update(id, dto);
   }
 

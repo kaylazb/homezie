@@ -1,22 +1,17 @@
-import { IsNotEmpty, IsString, IsInt, IsUUID } from 'class-validator';
 
-export class CreateBookingDto {
-  @IsUUID()
-  @IsNotEmpty()
-  user_id: string;
+import { z } from 'zod';
 
-  @IsUUID()
-  @IsNotEmpty()
-  schedule_id: string;
+export const createBookingSchema = z.object({
+  user_id: z.string().uuid(),
+  schedule_id: z.string().uuid(),
+  total_amount: z.number().int(),
+  status: z.string(), // Misal: "PENDING", "CONFIRMED", "CANCELLED"
+  seats: z.array(z.string()), // Array of seat numbers
+});
 
-  @IsInt()
-  @IsNotEmpty()
-  total_amount: number;
+// Untuk infer ke TypeScript type (kalau mau)
+export type CreateBookingDto = z.infer<typeof createBookingSchema>;
 
-  @IsString()
-  @IsNotEmpty()
-  status: string; // Misal: PENDING, CONFIRMED, CANCELLED
+export const updateBookingSchema = createBookingSchema.partial();
 
-  @IsNotEmpty()
-  seats: string[]; // Daftar nomor kursi
-}
+export type UpdateBookingDto = z.infer<typeof updateBookingSchema>;

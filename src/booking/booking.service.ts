@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateBookingDto } from './dto/create-booking.dot';
-import { UpdateBookingDto } from './dto/update-booking.tdo';
+import { CreateBookingDto, UpdateBookingDto } from './dto/create-booking.dot';
+
 
 @Injectable()
 export class BookingService {
@@ -48,7 +48,16 @@ export class BookingService {
   async update(id: string, dto: UpdateBookingDto) {
     return this.prisma.booking.update({
       where: { id },
-      data: dto,
+      data: {
+        schedule_id: dto.schedule_id,
+        user_id: dto.user_id,
+        total_amount: dto.total_amount,
+        seats: {
+          deleteMany: {}, // hapus semua seat lama
+          create: dto.seats?.map(seat => ({ seat_number: seat })),
+        },gti
+        status: dto.status
+      },
     });
   }
 
