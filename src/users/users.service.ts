@@ -1,55 +1,32 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+// src/user/user.service.ts
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { User } from './interface/user.interface';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto, createUserSchema, UpdateUserDto, updateUserSchema } from './dto/user.dto';
+  
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateUserDto) {
+  async create(data: CreateUserDto) {
+    const parsed = createUserSchema.safeParse(data);
+    if (!parsed.success) {
+      throw new Error(JSON.stringify(parsed.error.flatten()));
+    }
+
     return this.prisma.user.create({
-      data: {
-        name: dto.name,
-        email: dto.email,
-        password: dto.password,
-        phone_number: dto.phone_number,
-      },
+      data: parsed.data,
     });
   }
 
   async findAll() {
-    const users = await this.prisma.user.findMany({
-      include: {
-        wallet: true,
-        topups: true,
-        withdrawals: true,
-        bookings: true,
-      },
-    });
-
-    return users.map(({ password, verification_token,blocked_until, ...rest }) => rest);
-
+    return this.prisma.user.findMany();
   }
 
   async findOne(id: string) {
-    const user = await this.prisma.user.findUnique({
+    return this.prisma.user.findUnique({
       where: { id },
-
-      include: {
-        wallet: true,
-        topups: true,
-        withdrawals: true,
-        bookings: true,
-      },
     });
-
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
-
-    return user;
   }
 
   async findByEmail(email: string) {
@@ -58,10 +35,15 @@ export class UsersService {
     });
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
+  async update(id: string, data: UpdateUserDto) {
+    const parsed = updateUserSchema.safeParse(data);
+    if (!parsed.success) {
+      throw new Error(JSON.stringify(parsed.error.flatten()));
+    }
+
     return this.prisma.user.update({
       where: { id },
-      data: updateUserDto,
+      data: parsed.data,
     });
   }
 

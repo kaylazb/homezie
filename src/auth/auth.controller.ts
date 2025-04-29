@@ -1,6 +1,7 @@
-import { Body, Controller, Post, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Post, UnauthorizedException, UsePipes } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { CreateUserDto, createUserSchema } from 'src/users/dto/user.dto';
+import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
 
 @Controller('auth')
 export class AuthController {
@@ -14,8 +15,11 @@ export class AuthController {
       throw new UnauthorizedException('Invalid email or password');
     }
     return this.authService.login(user);
+
   }
 
+  
+  @UsePipes(new ZodValidationPipe(createUserSchema))
   @Post('register')
   async register(@Body() createUserDto: CreateUserDto) {
     return this.authService.register(createUserDto);
