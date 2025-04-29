@@ -22,7 +22,7 @@ export class BookingService {
   async findAll() {
     return this.prisma.booking.findMany({
       include: {
-        user: true,
+        user: false,
         schedule: true,
         seats: true,
         payment: true,
@@ -55,13 +55,17 @@ export class BookingService {
         seats: {
           deleteMany: {}, // hapus semua seat lama
           create: dto.seats?.map(seat => ({ seat_number: seat })),
-        },gti
+        },
         status: dto.status
       },
     });
   }
 
   async remove(id: string) {
+    await this.prisma.bookingSeat.deleteMany({
+      where: { booking_id: id },
+    });
+    
     return this.prisma.booking.delete({
       where: { id },
     });

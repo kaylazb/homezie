@@ -13,6 +13,12 @@ async function bootstrap() {
     }),
   );
 
+  app.enableCors({
+    origin: '*', // Atau tentukan ['http://localhost:3000'] untuk lebih aman
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true, // Jika kamu perlu mengirim cookie
+  });
   
   await app.listen(process.env.PORT ?? 3000);
 }
