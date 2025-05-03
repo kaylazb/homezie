@@ -10,9 +10,14 @@ import { BusModule } from './bus/bus.module';
 import { BusClassModule } from './bus-class/bus-class.module';
 import { PaymentModule } from './payment/payment.module';
 import { RoutesModule } from './routes/routes.module';
+import { WalletModule } from './wallet/wallet.module';
+import { WalletTransactionModule } from './wallet-transaction/wallet-transaction.module';
+import { TopupModule } from './topup/topup.module';
+import { WithdrawalModule } from './withdrawal/withdrawal.module';
+import { TransferModule } from './transfer/transfer.module';
 
 @Module({
-  imports: [UsersModule, BookingModule, ScheduleModule, AuthModule, BusModule, BusClassModule, PaymentModule,BookingModule, RoutesModule ],
+  imports: [UsersModule, BookingModule, ScheduleModule, AuthModule, BusModule, BusClassModule, PaymentModule,BookingModule, RoutesModule, WalletModule, WalletTransactionModule, TopupModule, WithdrawalModule, TransferModule ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })

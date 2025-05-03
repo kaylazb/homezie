@@ -53,6 +53,8 @@ model Wallet {
   balance   Int                  @default(0)
   user      User                 @relation(fields: [user_id], references: [id])
   transactions WalletTransaction[]
+  transfersFrom     Transfer[]           @relation("FromWalletTransfers")
+  transfersTo       Transfer[]           @relation("ToWalletTransfers")
 }
 
 model WalletTransaction {
@@ -60,7 +62,7 @@ model WalletTransaction {
   wallet_id  String
   amount     Int
   type       String
-  reference  String
+  reference  String //digunakan untuk menuimpan reference id dari payment gateway
   created_at DateTime @default(now())
 
   wallet     Wallet   @relation(fields: [wallet_id], references: [id])
@@ -197,4 +199,18 @@ enum Role {
   ADMIN
   CUSTOMER
   DRIVER
+}
+
+model Transfer {  
+  id              String   @id @default(uuid())
+  from_wallet_id  String
+  to_wallet_id    String
+  amount          Int
+  reference       String
+  status          String   @default("PENDING")
+  created_at      DateTime @default(now())
+  completed_at    DateTime?
+
+  fromWallet      Wallet   @relation("FromWalletTransfers", fields: [from_wallet_id], references: [id])
+  toWallet        Wallet   @relation("ToWalletTransfers", fields: [to_wallet_id], references: [id])
 }

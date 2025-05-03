@@ -2,6 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto, createUserSchema, UpdateUserDto, updateUserSchema } from './dto/user.dto';
+import { User } from '@prisma/client';
   
 
 @Injectable()
@@ -32,6 +33,12 @@ export class UsersService {
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
+    });
+  }
+
+  async findByNumber(number: string):Promise<User[]> {
+    return this.prisma.user.findMany({
+      where: { phone_number : number },
     });
   }
 
