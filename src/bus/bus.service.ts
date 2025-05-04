@@ -12,13 +12,18 @@ export class BusService {
     });
   }
 
-  findAll() {
-    return this.prisma.bus.findMany({
+  async findAll() {
+  const buses  = await  this.prisma.bus.findMany({
       include: {
         busClass: true,
         schedules: true,
       },
     });
+
+    return {
+      data : buses,
+      messsage : "success get all buses"
+    }
   }
 
   findOne(id: string) {

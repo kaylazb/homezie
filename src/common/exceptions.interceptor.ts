@@ -4,8 +4,11 @@ import {
     ArgumentsHost,
     HttpException,
     HttpStatus,
+    BadRequestException,
   } from '@nestjs/common';
   import { Request, Response } from 'express';
+import { ZodValidationPipe } from './pipes/zod-validation.pipe';
+
   
   @Catch()
   export class AllExceptionsFilter implements ExceptionFilter {
@@ -17,18 +20,22 @@ import {
       let status = HttpStatus.INTERNAL_SERVER_ERROR;
       let message = 'Internal server error';
       let errors = {};
+
+      console.log(exception instanceof BadRequestException)
   
       if (exception instanceof HttpException) {
+        console.log("http error exection")
         status = exception.getStatus();
         const res = exception.getResponse();
         if (typeof res === 'string') {
           message = res;
         } else if (typeof res === 'object') {
+       
           const resObj = res as any;
           message = resObj.message || message;
-          errors = resObj.errors || {};
+          errors = res || {};
         }
-      }
+      } 
   
       response.status(status).json({
         success: false,

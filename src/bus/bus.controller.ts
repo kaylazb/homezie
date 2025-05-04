@@ -1,15 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, ValidationPipe } from '@nestjs/common';
 import { BusService } from './bus.service';
-import { CreateBusSchema, UpdateBusSchema } from './dto/bus.dto';
+import { createBusSchema, UpdateBusSchema } from './dto/bus.dto';
 import { z } from 'zod';
+import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
 
 @Controller('bus')
 export class BusController {
   constructor(private readonly busService: BusService) {}
 
   @Post()
-  async create(@Body() body: any) {
-    const parseResult = CreateBusSchema.safeParse(body);
+  async create(@Body(new ZodValidationPipe(createBusSchema)) body: any) {
+    const parseResult = createBusSchema.safeParse(body);
     if (!parseResult.success) {
       throw new Error(JSON.stringify(parseResult.error.format()));
     }

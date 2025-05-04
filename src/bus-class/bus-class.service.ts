@@ -16,11 +16,16 @@ export class BusClassService {
   }
 
   async findAll() {
-    return this.prisma.busClass.findMany({
+    const result =  await this.prisma.busClass.findMany({
       include: {
         buses: false, // Tidak ikut ambil relasi 'buses'
       },
     });
+
+    return {
+        data: result,
+        message : "success get all bus class"
+    }
   }
 
   async findOne(id: string) {
