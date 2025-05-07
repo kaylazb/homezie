@@ -14,11 +14,16 @@ export class RoutesService {
   }
 
   async findAll() {
-    return this.prisma.route.findMany({
+    const routes = await  this.prisma.route.findMany({
       include: {
         schedules: false, // or true if you want to include schedules
       },
     });
+
+    return {
+      data: routes,
+      message: "success find all routes"
+    }
   }
 
   async findOne(id: string) {

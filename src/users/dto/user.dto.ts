@@ -20,6 +20,7 @@ export const createUserSchema = z.object({
   last_location: z.string().optional(),
   socket_id: z.string().optional(),
   fcm_token: z.string().optional(),
+
 });
 
 // auto generate Type dari Zod Schema

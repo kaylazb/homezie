@@ -3,11 +3,12 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto, createUserSchema, UpdateUserDto, updateUserSchema } from './dto/user.dto';
 import { User } from '@prisma/client';
-  
+import { PaginationDto } from 'src/common/dto/pagination-dto';
+
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(data: CreateUserDto) {
     const parsed = createUserSchema.safeParse(data);
@@ -20,10 +21,27 @@ export class UsersService {
     });
   }
 
-  async findAll() {
-    const users  = await  this.prisma.user.findMany();
+  async findAll(paginationDto: PaginationDto) {
+
+    const { page , limit  } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        skip,
+        take: Number(limit),
+      }),
+      this.prisma.user.count(),
+    ]);
+
     return {
-      data: users,
+      data: {
+        users,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
       message: "success find all user"
     }
   }
@@ -40,9 +58,9 @@ export class UsersService {
     });
   }
 
-  async findByNumber(number: string):Promise<User[]> {
+  async findByNumber(number: string): Promise<User[]> {
     return this.prisma.user.findMany({
-      where: { phone_number : number },
+      where: { phone_number: number },
     });
   }
 
