@@ -1,10 +1,11 @@
 // src/schedule/schedule.controller.ts
-import { Controller, Get, Post, Body, Patch, Param, Delete, UsePipes } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UsePipes, Query } from '@nestjs/common';
 
 import { ScheduleService } from './schedule.service';
 
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
 import { createScheduleSchema, CreateScheduleDto, updateScheduleSchema, UpdateScheduleDto } from './dto/schedule.dto';
+import { PaginationDto } from 'src/common/dto/pagination-dto';
 
 
 @Controller('schedules')
@@ -17,8 +18,8 @@ export class ScheduleController {
   }
 
   @Get()
-  findAll() {
-    return this.scheduleService.findAll();
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.scheduleService.findAll(paginationDto);
   }
 
   @Get(':id')

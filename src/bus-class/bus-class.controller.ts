@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { BusClassService } from './bus-class.service';
 import { CreateBusClassDto, CreateBusClassSchema, UpdateBusClassDto } from './dto/bus-class.dto';
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
+import { PaginationDto } from 'src/common/dto/pagination-dto';
 
 @Controller('bus-class')
 export class BusClassController {
@@ -13,8 +14,8 @@ export class BusClassController {
   }
 
   @Get()
-  findAll() {
-    return this.busClassService.findAll();
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.busClassService.findAll(paginationDto);
   }
 
   @Get(':id')

@@ -6,10 +6,12 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { WithdrawalService } from './withdrawal.service';
 import { CreateWithdrawalDto, UpdateWithdrawalDto, createWithdrawalSchema, updateWithdrawalSchema } from './dto/create-withdrawal.dto';
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
+import { PaginationDto } from 'src/common/dto/pagination-dto';
 
 @Controller('withdrawals')
 export class WithdrawalController {
@@ -21,8 +23,8 @@ export class WithdrawalController {
   }
 
   @Get()
-  findAll() {
-    return this.withdrawalService.findAll();
+  findAll(@Query() paginantionDto: PaginationDto) {
+    return this.withdrawalService.findAll(paginantionDto);
   }
 
   @Get(':id')

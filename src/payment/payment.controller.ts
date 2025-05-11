@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto, UpdatePaymentDto, createPaymentSchema, updatePaymentSchema } from './dto/payment.dto';
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
+import { PaginationDto } from 'src/common/dto/pagination-dto';
 
 @Controller('payment')
 export class PaymentController {
@@ -13,8 +14,8 @@ export class PaymentController {
   }
 
   @Get()
-  findAll() {
-    return this.paymentService.findAll();
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.paymentService.findAll(paginationDto);
   }
 
   @Get(':id')

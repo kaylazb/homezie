@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateRouteDto, UpdateRouteDto } from './dto/route.dto';
+import { PaginationDto } from 'src/common/dto/pagination-dto';
 
 
 @Injectable()
 export class RoutesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(createRouteDto: CreateRouteDto) {
     return this.prisma.route.create({
@@ -13,16 +14,31 @@ export class RoutesService {
     });
   }
 
-  async findAll() {
-    const routes = await  this.prisma.route.findMany({
-      include: {
-        schedules: false, // or true if you want to include schedules
-      },
-    });
+  async findAll(paginationDto: PaginationDto) {
+
+    const { page, limit } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [routes, total] = await Promise.all([
+      this.prisma.route.findMany({
+        skip,
+        take: Number(limit),
+        include: {
+          schedules: false, // or true if you want to include schedules
+        },  
+      }),
+      this.prisma.route.count()
+    ])
 
     return {
-      data: routes,
-      message: "success find all routes"
+      data: {
+        routes,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+      message: "success find all user"
     }
   }
 

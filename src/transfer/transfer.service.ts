@@ -6,6 +6,7 @@ import {
   updateTransferSchema,
 } from './dto/transfer.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { PaginationDto } from 'src/common/dto/pagination-dto';
 
 @Injectable()
 export class TransferService {
@@ -22,13 +23,33 @@ export class TransferService {
     });
   }
 
-  async findAll() {
-    return this.prisma.transfer.findMany({
-      include: {
-        fromWallet: true,
-        toWallet: true,
+  async findAll(paginationDto: PaginationDto) {
+
+    const { page, limit } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [transfers, total] = await Promise.all([
+       this.prisma.transfer.findMany({
+        skip,
+        take: Number(limit),
+        include: {
+          fromWallet: true,
+          toWallet: true,
+        },
+      }),
+      this.prisma.transfer.count()
+    ])
+
+    return {
+      data: {
+        transfers,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-    });
+      message: "success find all transfer"
+    }
   }
 
   async findOne(id: string) {

@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTopupDto, UpdateTopupDto, createTopupSchema, updateTopupSchema } from './dto/topup.dto';
+import { PaginationDto } from 'src/common/dto/pagination-dto';
 
 
 @Injectable()
@@ -18,12 +19,32 @@ export class TopupService {
     });
   }
 
-  async findAll() {
-    return this.prisma.topup.findMany({
-      include: {
-        user: true,
+  async findAll(paginationDto: PaginationDto) {
+
+    const { page, limit } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [topups, total ] = await Promise.all([
+      this.prisma.topup.findMany({
+        skip,
+        take: Number(limit),
+        include: {
+          user: true,
+        },
+      }),
+      this.prisma.topup.count()
+    ])
+
+    return {
+      data: {
+        topups,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-    });
+      message: "success find all user"
+    }
   }
 
   async findOne(id: string) {

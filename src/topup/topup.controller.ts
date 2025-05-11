@@ -6,10 +6,12 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { TopupService } from './topup.service';
 import { CreateTopupDto, UpdateTopupDto, createTopupSchema } from './dto/topup.dto';
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
+import { PaginationDto } from 'src/common/dto/pagination-dto';
 
 @Controller('topups')
 export class TopupController {
@@ -21,8 +23,8 @@ export class TopupController {
   }
 
   @Get()
-  findAll() {
-    return this.topupService.findAll();
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.topupService.findAll(paginationDto);
   }
 
   @Get(':id')

@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service'; // pastikan ada
 import { CreateBusDto, UpdateBusDto } from './dto/bus.dto';
+import { PaginationDto } from 'src/common/dto/pagination-dto';
 
 @Injectable()
 export class BusService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   create(data: CreateBusDto) {
     return this.prisma.bus.create({
@@ -12,17 +13,32 @@ export class BusService {
     });
   }
 
-  async findAll() {
-  const buses  = await  this.prisma.bus.findMany({
-      include: {
-        busClass: true,
-        schedules: true,
-      },
-    });
+  async findAll(paginationDto: PaginationDto) {
+
+    const { page, limit } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [buses, total] = await Promise.all([
+      this.prisma.bus.findMany({
+        skip,
+        take: Number(limit),
+        include: {
+          busClass: true
+        }
+      }),
+
+      this.prisma.user.count(),
+    ]);
 
     return {
-      data : buses,
-      messsage : "success get all buses"
+      data: {
+        buses,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+      message: "success find all user"
     }
   }
 

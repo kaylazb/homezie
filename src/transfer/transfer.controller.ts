@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { TransferService } from './transfer.service';
 import { CreateTransferDto, UpdateTransferDto } from './dto/transfer.dto';
+import { PaginationDto } from 'src/common/dto/pagination-dto';
 
 @Controller('transfers')
 export class TransferController {
@@ -12,8 +13,8 @@ export class TransferController {
   }
 
   @Get()
-  findAll() {
-    return this.transferService.findAll();
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.transferService.findAll(paginationDto);
   }
 
   @Get(':id')

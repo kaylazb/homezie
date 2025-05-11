@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateWithdrawalDto, UpdateWithdrawalDto, createWithdrawalSchema, updateWithdrawalSchema } from './dto/create-withdrawal.dto';
+import { PaginationDto } from 'src/common/dto/pagination-dto';
 
 
 @Injectable()
@@ -18,12 +19,34 @@ export class WithdrawalService {
     });
   }
 
-  async findAll() {
-    return this.prisma.withdrawal.findMany({
-      include: {
-        user: true,
+  async findAll(paginationDto: PaginationDto) {
+
+    const { page, limit } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [withdrawals, total] = await Promise.all([
+
+      this.prisma.withdrawal.findMany({
+        skip,
+        take: Number(limit),
+        include: {
+          user: true,
+        },
+      }),
+      this.prisma.withdrawal.count()
+    ])
+
+    return {
+      data: {
+        withdrawals,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-    });
+      message: "success find all wallet transaction"
+    }
+   
   }
 
   async findOne(id: string) {

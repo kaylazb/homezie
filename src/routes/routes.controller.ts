@@ -6,11 +6,13 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { RoutesService } from './routes.service';
 import { CreateRouteDto, UpdateRouteDto, createRouteschema, updateRouteSchema } from './dto/route.dto';
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
 import { updateBookingSchema } from 'src/booking/dto/create-booking.dot';
+import { PaginationDto } from 'src/common/dto/pagination-dto';
 
 
 @Controller('routes')
@@ -23,8 +25,8 @@ export class RoutesController {
   }
 
   @Get()
-  findAll() {
-    return this.routesService.findAll();
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.routesService.findAll(paginationDto);
   }
 
   @Get(':id')

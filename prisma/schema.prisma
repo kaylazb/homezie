@@ -131,7 +131,7 @@ model Booking {
   user_id      String
   schedule_id  String
   total_amount Int
-  status       String
+  status       String @default("PENDING")
   created_at   DateTime @default(now())
 
   user         User      @relation(fields: [user_id], references: [id])

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePaymentDto, UpdatePaymentDto } from './dto/payment.dto';
+import { PaginationDto } from 'src/common/dto/pagination-dto';
 
 @Injectable()
 export class PaymentService {
@@ -16,12 +17,33 @@ export class PaymentService {
     });
   }
 
-  async findAll() {
-    return this.prisma.payment.findMany({
-      include: {
-        booking: true, // Kalau mau sekalian ambil data Booking yang terkait
+  async findAll(paginationDto: PaginationDto) {
+
+    const { page, limit } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [payments, total] = await Promise.all([
+      this.prisma.payment.findMany({
+        skip,
+        take: Number(limit),
+        include: {
+          booking: true,
+        },
+      }),
+      this.prisma.payment.count()
+    ]);
+
+    return {
+      data: {
+        payments,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-    });
+      message: "success find all payment"
+    }
+
   }
 
   async findOne(id: string) {
