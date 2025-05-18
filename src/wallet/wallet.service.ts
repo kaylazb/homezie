@@ -111,9 +111,12 @@ export class WalletService {
   }
 
   //flow update balance topup
+  // flow balance topup is waiting callback from xendit if callback is called so update balance function insert data to "topup","wallet transaction", and update data balance
   //1. get wallet ballance (because topup insert data on wallet transaction after success callback from payment gateway)
-  //2. if wallet found so create topup data and pass user_id from wallet to topup
-  //3. 
+  //2. if wallet found, so create topup data because walletTransaction need trx_id from id topup
+  //3. if data wallet transaction success created so  go ahead to update balance
+  //4. done
+
   async updateBalanceTopup(data: UpdateBalanceDto) {
 
     const wallet_id = data.external_id.split('-')[1];
@@ -144,16 +147,14 @@ export class WalletService {
       //add data to wallet transaction
       const walletTransaction = await tx.walletTransaction.create({
         data: {
+          id: id,
           amount: data.amount,
           wallet_id: wallet_id,
           type: "TOPUP",
           payment_ref: data.external_id,
-          id: id,
           trx_id: topup.id
         },
       });
-
-      // console.log(walletTransaction)
 
       if (!walletTransaction) throw new Error('failed add wallet transaction')
 
@@ -175,9 +176,13 @@ export class WalletService {
 
   }
 
-  async updateBalanceDisburstment(data: UpdateBalanceDisburstmentDto) {
+  //flow update balance withdrawal
+  //1. flow update balance withdraw is different with update balance topup on update balance wd you have to create data on withdrawal table first on update balance withdrawal you just update status in table withdrawal table from response xendit
+  //2. get data on wallet transaction using external id -> you need walet_id for get wallet and trx_id for update status, u need get wallet for update or get ballance information
+  //3. update status from xendit to table withdrawal
+  //4. done
 
-    const wallet_id = data.external_id.split('-')[1];
+  async updateBalanceDisburstment(data: UpdateBalanceDisburstmentDto) {
 
     //use transaction for avoid race condition
     const updatedWallet = await this.prisma.$transaction(async (tx) => {
@@ -187,8 +192,6 @@ export class WalletService {
         where: { payment_ref: data.external_id }
       })
 
-      console.log("wallet transaction" + walletTransaction)
-
       if (!walletTransaction) throw new Error('Wallet transaction not found');
 
 
@@ -196,8 +199,6 @@ export class WalletService {
       const wallet = await tx.wallet.findUnique({
         where: { id: walletTransaction.wallet_id}
       })
-
-      console.log("wallet " +wallet)
 
       if (!wallet) throw new Error('Wallet not found');
 
