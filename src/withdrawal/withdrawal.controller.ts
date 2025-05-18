@@ -12,6 +12,8 @@ import { WithdrawalService } from './withdrawal.service';
 import { CreateWithdrawalDto, UpdateWithdrawalDto, createWithdrawalSchema, updateWithdrawalSchema } from './dto/create-withdrawal.dto';
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
 import { PaginationDto } from 'src/common/dto/pagination-dto';
+import { updateBalanceSchema } from 'src/wallet/dto/wallet.dto';
+import { UpdateBalanceDisburstmentDto } from 'src/wallet-transaction/dto/wallet-transaction.dto';
 
 @Controller('withdrawals')
 export class WithdrawalController {

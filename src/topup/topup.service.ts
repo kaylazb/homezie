@@ -1,22 +1,27 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTopupDto, UpdateTopupDto, createTopupSchema, updateTopupSchema } from './dto/topup.dto';
 import { PaginationDto } from 'src/common/dto/pagination-dto';
+import { WalletTransactionService } from 'src/wallet-transaction/wallet-transaction.service';
 
 
 @Injectable()
 export class TopupService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private walletTransaction: WalletTransactionService) {}
 
   async create(data: CreateTopupDto) {
-    const parsed = createTopupSchema.safeParse(data);
-    if (!parsed.success) {
-      throw new BadRequestException(parsed.error.flatten());
-    }
 
-    return this.prisma.topup.create({
-      data: parsed.data,
+    const topup = await  this.prisma.topup.create({
+      data: data,
     });
+
+    if (!topup) throw new NotFoundException("topup not found")
+
+    return {
+      data: {},
+      message: "success topup"
+    }
+    
   }
 
   async findAll(paginationDto: PaginationDto) {
@@ -73,4 +78,5 @@ export class TopupService {
       where: { id },
     });
   }
+
 }

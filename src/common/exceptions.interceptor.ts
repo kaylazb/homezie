@@ -20,8 +20,6 @@ import { ZodValidationPipe } from './pipes/zod-validation.pipe';
       let status = HttpStatus.INTERNAL_SERVER_ERROR;
       let message = 'Internal server error';
       let errors = {};
-
-      console.log(exception instanceof BadRequestException)
   
       if (exception instanceof HttpException) {
         console.log("http error exection")

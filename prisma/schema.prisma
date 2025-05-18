@@ -35,6 +35,9 @@ model User {
   last_location     String?
   socket_id         String?
   fcm_token         String?
+  bank_code         String?
+  account_holder_name String?
+  account_number    String?
 
   wallet            Wallet?
   topups            Topup[]
@@ -57,22 +60,26 @@ model Wallet {
   transfersTo       Transfer[]           @relation("ToWalletTransfers")
 }
 
+
+//digunakan untuk merekap transaksi pada topup, transfer, dan withdrawal
 model WalletTransaction {
   id         String   @id @default(uuid())
   wallet_id  String
   amount     Int
-  type       String
-  reference  String //digunakan untuk menuimpan reference id dari payment gateway
+  type       TransactionType
+  payment_ref  String //berisi id dari xendit kemudian id di parse untuk wallet 
   created_at DateTime @default(now())
-
+  trx_id     String //berisi id dari topup dan withdrawal id
   wallet     Wallet   @relation(fields: [wallet_id], references: [id])
 }
 
 model Topup {
+
   id         String   @id @default(uuid())
   user_id    String
   amount     Int
   status     String
+  reference  String  // berisi id dari id xendit 
   created_at DateTime @default(now())
 
   user       User     @relation(fields: [user_id], references: [id])
@@ -86,7 +93,7 @@ model Withdrawal {
   account_number String
   status         String
   created_at     DateTime @default(now())
-
+  reference  String  //berisi id dari id xendit 
   user           User     @relation(fields: [user_id], references: [id])
 }
 
@@ -148,6 +155,7 @@ model BookingSeat {
   booking     Booking  @relation(fields: [booking_id], references: [id])
 }
 
+// digunakan untuk summary pembayaran pada bookinng
 model Payment {
   id          String   @id @default(uuid())
   booking_id  String   @unique
@@ -213,4 +221,11 @@ model Transfer {
 
   fromWallet      Wallet   @relation("FromWalletTransfers", fields: [from_wallet_id], references: [id])
   toWallet        Wallet   @relation("ToWalletTransfers", fields: [to_wallet_id], references: [id])
+}
+
+enum TransactionType {
+  TOPUP
+  WITHDRAWAL
+  TRANSFER_IN
+  TRANSFER_OUT
 }

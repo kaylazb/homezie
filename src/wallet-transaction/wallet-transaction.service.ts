@@ -9,13 +9,9 @@ export class WalletTransactionService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: CreateWalletTransactionDto) {
-    const parsed = createWalletTransactionSchema.safeParse(data);
-    if (!parsed.success) {
-      throw new BadRequestException(parsed.error.flatten());
-    }
 
     return this.prisma.walletTransaction.create({
-      data: parsed.data,
+      data: data,
     });
   }
 

@@ -14,6 +14,9 @@ export const createUserSchema = z.object({
 
   role: z.enum(['ADMIN', 'CUSTOMER', 'DRIVER']).optional(),
 
+  bank_code: z.string().optional(),
+  account_number: z.string().optional(),
+  account_holder_name: z.string().optional(),
   device_type: z.string().optional(),
   device_id: z.string().optional(),
   last_ip: z.string().optional(),

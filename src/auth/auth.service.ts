@@ -6,12 +6,14 @@ import { CreateUserDto } from 'src/users/dto/user.dto';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/auth.dto';
 import { User } from '@prisma/client';
+import { WalletService } from 'src/wallet/wallet.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private walletService: WalletService
   ) {}
 
   async validateUser(email: string, password: string): Promise<User> {
@@ -34,6 +36,7 @@ export class AuthService {
 
     const payload = { sub: result.id, role: result.role };
 
+    const wallet = await this.walletService.findOneByUserId(result.id)
 
     return {
           data: {
@@ -44,6 +47,7 @@ export class AuthService {
             "profile_picture": result.profile_picture,
             "address": result.address,
             "access_token": this.jwtService.sign(payload),
+            "wallet_id": wallet.data?.id
             
           },
           message:"sucess login"
@@ -61,13 +65,9 @@ export class AuthService {
       throw new BadRequestException('number already exist');
     }
 
+    const newUser = await this.usersService.create({...createUserDto});
 
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-
-    const newUser = await this.usersService.create({
-      ...createUserDto,
-      password: hashedPassword,
-    });
+    if (!newUser) throw new Error("failed add user")
 
     return {
       message: 'Registration successful',

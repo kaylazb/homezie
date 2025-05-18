@@ -9,17 +9,26 @@ import {
   Query,
 } from '@nestjs/common';
 import { TopupService } from './topup.service';
-import { CreateTopupDto, UpdateTopupDto, createTopupSchema } from './dto/topup.dto';
+import { CreateTopupDto, CreateVADto, UpdateTopupDto, createTopupSchema, createVASchema } from './dto/topup.dto';
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
 import { PaginationDto } from 'src/common/dto/pagination-dto';
+import { PaymentGatewayService } from 'src/payment-gateway/payment-gateway.service';
+
 
 @Controller('topups')
 export class TopupController {
-  constructor(private readonly topupService: TopupService) {}
+  constructor(private readonly topupService: TopupService,
+    private readonly paymentGateWayService: PaymentGatewayService)
+    {}
 
   @Post()
   create(@Body(new ZodValidationPipe(createTopupSchema)) body: CreateTopupDto) {
     return this.topupService.create(body);
+  }
+
+  @Post("/generate-va")
+  generate(@Body(new ZodValidationPipe(createVASchema)) body: CreateVADto) {
+    return this.paymentGateWayService.createVA(body);
   }
 
   @Get()

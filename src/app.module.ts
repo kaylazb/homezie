@@ -15,9 +15,10 @@ import { WalletTransactionModule } from './wallet-transaction/wallet-transaction
 import { TopupModule } from './topup/topup.module';
 import { WithdrawalModule } from './withdrawal/withdrawal.module';
 import { TransferModule } from './transfer/transfer.module';
+import { PaymentGatewayModule } from './payment-gateway/payment-gateway.module';
 
 @Module({
-  imports: [UsersModule, BookingModule, ScheduleModule, AuthModule, BusModule, BusClassModule, PaymentModule,BookingModule, RoutesModule, WalletModule, WalletTransactionModule, TopupModule, WithdrawalModule, TransferModule ],
+  imports: [UsersModule, BookingModule, ScheduleModule, AuthModule, BusModule, BusClassModule, PaymentModule,BookingModule, RoutesModule, WalletModule, WalletTransactionModule, TopupModule, WithdrawalModule, TransferModule, PaymentGatewayModule ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })
