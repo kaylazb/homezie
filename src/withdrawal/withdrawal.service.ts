@@ -40,10 +40,8 @@ export class WithdrawalService {
     }
 
     const wallet = await this.prisma.wallet.findUnique({
-      where: {user_id : user.id}
+        where: {user_id : user.id}
     })
-
-    console.log("wallet  ss "+ wallet)
 
     if (!wallet) throw new Error("wallet not found")
 

@@ -38,6 +38,8 @@ model User {
   bank_code         String?
   account_holder_name String?
   account_number    String?
+  qris_payload      String?         
+  qris_image_url    String?
 
   wallet            Wallet?
   topups            Topup[]

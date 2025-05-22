@@ -7,6 +7,9 @@ import { PaginationDto } from 'src/common/dto/pagination-dto';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { WalletService } from 'src/wallet/wallet.service';
+import * as QRCode from 'qrcode';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class UsersService {
@@ -15,24 +18,43 @@ export class UsersService {
   async create(data: CreateUserDto) {
 
     const id = uuidv4().replace(/-/g, '');
-    console.log(id)
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     const userData = { ...data, password: hashedPassword, id: id }
+
+    let filePath = ""
+
 
     const addNewUser = await this.prisma.$transaction(async (tx) => {
 
       const newUser = await tx.user.create({
         data: userData,
       });
-      if (!newUser) throw new Error("failed create user")
 
-      console.log(newUser)
+      if (!newUser) throw new Error("failed create user")
 
       await this.walletService.createTx(userData.id, tx)
 
-      return newUser
+      try {
+
+        filePath = await this.generateQR(newUser.id);
+
+      } catch (error) {
+        console.error('⚠️ Gagal membuat QR:', error.message);
+      }
+
+      await tx.user.update({
+        where: { id: newUser.id },
+        data: { qris_image_url: filePath }
+      })
+
+      return {
+        id: newUser.id,
+        email: newUser.email,
+        role: newUser.role
+
+      }
 
     })
 
@@ -68,7 +90,7 @@ export class UsersService {
   async findOne(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
-      include : {
+      include: {
         wallet: true
       }
     });
@@ -102,5 +124,29 @@ export class UsersService {
     return this.prisma.user.delete({
       where: { id },
     });
+  }
+
+  async generateQR(userId: string): Promise<string> {
+    try {
+      const qr = await QRCode.toDataURL(`tiketku:${userId}`);
+      const base64Data = qr.replace(/^data:image\/png;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+      const filename = `${userId}.png`;
+      const relativePath = path.join('image', 'qr', filename);
+      const absolutePath = path.join(process.cwd(), relativePath);
+
+      const dir = path.dirname(absolutePath);
+
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+
+      fs.writeFileSync(absolutePath, buffer);
+
+      return relativePath;
+    } catch (err) {
+      console.error('QR generation failed:', err);
+      throw new Error('QR generation error');
+    }
   }
 }
