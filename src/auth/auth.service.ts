@@ -6,15 +6,13 @@ import { CreateUserDto } from 'src/users/dto/user.dto';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/auth.dto';
 import { User } from '@prisma/client';
-import { WalletService } from 'src/wallet/wallet.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-    private walletService: WalletService
-  ) {}
+  ) { }
 
   async validateUser(email: string, password: string): Promise<User> {
     const user = await this.usersService.findByEmail(email);
@@ -36,7 +34,6 @@ export class AuthService {
 
     const payload = { sub: result.id, role: result.role };
 
-    const wallet = await this.walletService.findOneByUserId(result.id)
 
     return {
           data: {
@@ -47,7 +44,6 @@ export class AuthService {
             "profile_picture": result.profile_picture,
             "address": result.address,
             "access_token": this.jwtService.sign(payload),
-            "wallet_id": wallet.data?.id
             
           },
           message:"sucess login"
@@ -55,14 +51,15 @@ export class AuthService {
   }
 
   async register(createUserDto: CreateUserDto) {
+
     const existingUser = await this.usersService.findByEmail(createUserDto.email);
     if (existingUser) {
-      throw new BadRequestException('Email already registered');
+      throw new BadRequestException({ "fieldErrors": { "email": ["email already exist"] } });
     }
 
     const listUser = await this.usersService.findByNumber(createUserDto.phone_number);
     if (listUser.length > 0) {
-      throw new BadRequestException('number already exist');
+      throw new BadRequestException({ "fieldErrors": { "phone_number": ["phone number already exist"] } });
     }
 
     const newUser = await this.usersService.create({...createUserDto});
