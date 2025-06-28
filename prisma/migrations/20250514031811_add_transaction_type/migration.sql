@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `Booking` MODIFY `status` VARCHAR(191) NOT NULL DEFAULT 'PENDING';

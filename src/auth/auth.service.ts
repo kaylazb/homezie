@@ -32,7 +32,7 @@ export class AuthService {
 
     const result = await this.validateUser(user.email, user.password);
 
-    const payload = { sub: result.id, role: result.role };
+    const payload = { sub: result.id};
 
 
     return {
@@ -41,8 +41,6 @@ export class AuthService {
             "name": result.name,
             "email": result.email,
             "phone_number": result.phone_number,
-            "profile_picture": result.profile_picture,
-            "address": result.address,
             "access_token": this.jwtService.sign(payload),
             
           },
@@ -70,8 +68,7 @@ export class AuthService {
       message: 'Registration successful',
       user: {
         id: newUser.id,
-        email: newUser.email,
-        role: newUser.role,
+        email: newUser.email
       },
     };
   }

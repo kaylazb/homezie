@@ -1,69 +1,52 @@
-// src/user/user.service.ts
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto, createUserSchema, UpdateUserDto, updateUserSchema } from './dto/user.dto';
-import { User } from '@prisma/client';
 import { PaginationDto } from 'src/common/dto/pagination-dto';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import { WalletService } from 'src/wallet/wallet.service';
 import * as QRCode from 'qrcode';
 import * as fs from 'fs';
 import * as path from 'path';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService, private walletService: WalletService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateUserDto) {
-
     const id = uuidv4().replace(/-/g, '');
-
     const hashedPassword = await bcrypt.hash(data.password, 10);
+    const userData = { ...data, password: hashedPassword, id };
 
-    const userData = { ...data, password: hashedPassword, id: id }
-
-    let filePath = ""
-
+    let filePath = '';
 
     const addNewUser = await this.prisma.$transaction(async (tx) => {
-
       const newUser = await tx.user.create({
         data: userData,
       });
 
-      if (!newUser) throw new Error("failed create user")
-
-      await this.walletService.createTx(userData.id, tx)
+      if (!newUser) throw new Error('Failed to create user');
 
       try {
-
         filePath = await this.generateQR(newUser.id);
-
       } catch (error) {
         console.error('⚠️ Gagal membuat QR:', error.message);
       }
 
       await tx.user.update({
         where: { id: newUser.id },
-        data: { qris_image_url: filePath }
-      })
+        data: { },
+      });
 
       return {
         id: newUser.id,
         email: newUser.email,
-        role: newUser.role
+      };
+    });
 
-      }
-
-    })
-
-    return addNewUser
-
+    return addNewUser;
   }
 
   async findAll(paginationDto: PaginationDto) {
-
     const { page, limit } = paginationDto;
     const skip = (page - 1) * limit;
 
@@ -83,26 +66,23 @@ export class UsersService {
         limit,
         totalPages: Math.ceil(total / limit),
       },
-      message: "success find all user"
-    }
+      message: 'Success find all user',
+    };
   }
 
   async findOne(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
-      include: {
-        wallet: true
-      }
     });
   }
 
   async findByEmail(email: string) {
-    return this.prisma.user.findUnique({
+    return this.prisma.user.findFirst({
       where: { email },
     });
   }
 
-  async findByNumber(number: string): Promise<User[]> {
+  async findByNumber(number: string) {
     return this.prisma.user.findMany({
       where: { phone_number: number },
     });
@@ -136,13 +116,11 @@ export class UsersService {
       const absolutePath = path.join(process.cwd(), relativePath);
 
       const dir = path.dirname(absolutePath);
-
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
 
       fs.writeFileSync(absolutePath, buffer);
-
       return relativePath;
     } catch (err) {
       console.error('QR generation failed:', err);
