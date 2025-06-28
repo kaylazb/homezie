@@ -6,7 +6,9 @@ export const createUserSchema = z.object({
   password: z.string().min(1, { message: 'Password is required' }),
   phone_number: z.string().regex(/^(\+62|62|0)8[1-9][0-9]{6,9}$/, { message: 'Invalid Indonesian phone number' }),
   created_by: z.string().optional(),
-  created_date: z.string().datetime().optional()
+  created_at: z.string().datetime().optional(),
+  failed_password: z.number().optional()
+
 });
 
 export type CreateUserDto = z.infer<typeof createUserSchema>;

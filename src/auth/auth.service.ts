@@ -1,7 +1,7 @@
 // auth.service.ts
 import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from '../users/users.service'; // Sesuaikan path sesuai struktur projekmu
+import { UsersService } from '../users/users.service'; 
 import { CreateUserDto } from 'src/users/dto/user.dto';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/auth.dto';
@@ -20,10 +20,23 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
+    if(user.failed_password && user.failed_password >= 3) {
+      throw new UnauthorizedException('Account locked due to too many failed login attempts');
+    }
+
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
+      await this.usersService.update(user.id, {
+      failed_password: (user.failed_password || 0) + 1
+    });
       throw new UnauthorizedException('Invalid credentials');
     }
+
+    if (user.failed_password && user.failed_password > 0) {
+      await this.usersService.update(user.id, {
+      failed_password: 0
+    });
+  }
 
     return user;
   }
