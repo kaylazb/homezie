@@ -24,3 +24,35 @@ model User {
   created_by      String?   @default("SYSTEM") @db.Text
   failed_password Int?
 }
+
+model House {
+  id             String   @id @default(uuid())
+  name           String
+  price          Decimal  @db.Decimal(15, 2)
+  land_area      Int
+  building_area  Int
+  bedrooms       Int
+  location       String
+  image_url      String?
+  created_at     DateTime @default(now())
+
+  charts         ChartHouse[]
+}
+
+model Chart {
+  id              String       @id @default(uuid())
+  user_id         String
+  ahp_preferences Json
+  created_at      DateTime     @default(now())
+
+  houses          ChartHouse[]
+}
+
+model ChartHouse {
+  id        String   @id @default(uuid())
+  chart_id  String
+  house_id  String
+
+  chart     Chart    @relation(fields: [chart_id], references: [id])
+  house     House    @relation(fields: [house_id], references: [id])
+}
