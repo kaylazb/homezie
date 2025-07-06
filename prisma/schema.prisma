@@ -35,6 +35,8 @@ model House {
   location       String
   image_url      String?
   created_at     DateTime @default(now())
+  longtitude     Decimal?  @db.Decimal(9, 6)
+  latitude       Decimal?  @db.Decimal(9, 6)
 
   charts         ChartHouse[]
 }

@@ -39,7 +39,7 @@ export class ChartService {
         campusLat,
         campusLon,
         parseFloat(h.latitude as any),
-        parseFloat(h.longitude as any),
+        parseFloat(h.longtitude as any),
       );
       return { ...h, distance_from_campus: distance };
     });
@@ -48,7 +48,7 @@ export class ChartService {
     const weights = dto.ahp_preferences;
 
     const maxValues = {
-      price: Math.max(...housesWithDistance.map(h => h.price.toNumber())),
+      price: Math.min(...housesWithDistance.map(h => h.price.toNumber())),
       land_area: Math.max(...housesWithDistance.map(h => h.land_area)),
       distance: Math.max(...housesWithDistance.map(h => h.distance_from_campus)),
       bedrooms: Math.max(...housesWithDistance.map(h => h.bedrooms)),

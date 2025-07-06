@@ -31,4 +31,12 @@ export class CreateHouseDto {
 
   @IsOptional()
   image_url?: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  latitude: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  longtitude: number;
 }

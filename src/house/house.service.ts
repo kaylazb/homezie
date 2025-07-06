@@ -14,6 +14,8 @@ export class HouseService {
         price: true,
         location: true,
         image_url: true,
+        latitude: true,
+        longtitude: true
       },
       orderBy: {
         created_at: 'desc',

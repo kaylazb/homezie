@@ -7,5 +7,7 @@ export class CreateChartDto {
     distance: number;
     bedrooms: number;
     building_area: number;
+    latitude:number;
+    longtitude:number;
   };
 }
