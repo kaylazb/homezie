@@ -2,15 +2,16 @@ import { Controller, Get, Post, Param, Body} from '@nestjs/common';
 import { ChartService } from './chart.service';
 import { CreateChartDto } from './dto/create-chart.dto';
 
-@Controller('houses')
-export class HouseController {
+@Controller('simulate')
+export class ChartController {
   constructor(private readonly chartService: ChartService) {}
 
-  @Post()
+  @Post('houses')
   async calculatePreferences(@Body() body: CreateChartDto) {
+    const result = await this.chartService.createChart(body);
     return {
-      message: 'Success get house list',
-      data: await this.chartService.createChart,
+      message: 'Success create house',
+      data: result,
     };
   }
 }
