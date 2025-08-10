@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsOptional, IsInt, IsString, IsUrl, IsNumber } from 'class-validator';
 
-export class CreateHouseDto {
+export class UpdateHouseDto {
   @IsNotEmpty()
   @IsString()
   name: string;
@@ -30,7 +30,6 @@ export class CreateHouseDto {
   location: string;
 
   @IsOptional()
-  @IsString()
   image_url?: string;
 
   @IsNotEmpty()

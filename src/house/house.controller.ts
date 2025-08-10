@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Param, Body} from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Patch, Delete} from '@nestjs/common';
 import { HouseService } from './house.service';
 import { CreateHouseDto } from './dto/create-house.dto';
+import { UpdateHouseDto } from './dto/update-house.dto';
 
 @Controller('houses')
 export class HouseController {
@@ -30,4 +31,21 @@ export class HouseController {
       data: result,
     };
   }
+
+  @Patch(':id')
+  async updateHouse(@Param('id') id: string, @Body() body: UpdateHouseDto) {
+  const result = await this.houseService.update(id, body);
+  return {
+    message: 'Success update house',
+    data: result,
+  };
+}
+
+  @Delete(':id')
+  async deleteHouse(@Param('id') id: string) {
+  await this.houseService.delete(id);
+  return {
+    message: 'Success delete house',
+  };
+}
 }

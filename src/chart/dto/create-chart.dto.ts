@@ -8,7 +8,7 @@ export class CreateChartDto {
   house_ids: string[];
 
   @IsObject()
-  ahp_preferences: {
+  user_preferences: {
     price: number;
     land_area: number;
     distance: number;
