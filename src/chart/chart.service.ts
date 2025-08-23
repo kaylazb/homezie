@@ -17,10 +17,7 @@ export class ChartService {
     await Promise.all(
       dto.house_ids.map(house_id =>
         this.prisma.chartHouse.create({
-          data: {
-            chart_id: chart.id,
-            house_id,
-          },
+          data: { chart_id: chart.id, house_id },
         }),
       ),
     );
@@ -29,45 +26,46 @@ export class ChartService {
       where: { id: { in: dto.house_ids } },
     });
 
+    // Titik acuan kampus (ITB Jatinangor contoh)
     const campusLat = -6.8991038;
     const campusLon = 107.6324348;
 
-    // Hitung jarak ke kampus
+    // 1) Hitung jarak mentah (km)
     const housesWithDistance = houses.map(h => ({
       ...h,
       distance_from_campus: this.calculateDistance(
         campusLat,
         campusLon,
-        parseFloat(h.latitude !== null ? h.latitude.toString() : "0"),
-parseFloat(h.longtitude !== null ? h.longtitude.toString() : "0"),
-
+        h.latitude ? h.latitude.toNumber() : 0,
+      h.longtitude ? h.longtitude.toNumber() : 0,
       ),
     }));
 
-    // Ranking berdasarkan jarak (semakin dekat -> ranking lebih tinggi)
-    const distanceRanks = [...housesWithDistance]
-      .sort((a, b) => a.distance_from_campus - b.distance_from_campus)
-      .map((h, index) => ({ id: h.id, distance_rank_score: houses.length - index }));
+    // 2) Konversi jarak mentah -> skor ranking (semakin dekat semakin tinggi)
+    const sortedByDistance = [...housesWithDistance].sort(
+  (a, b) => a.distance_from_campus - b.distance_from_campus,
+);
+const idToDistanceScore = new Map<string, number>();
+sortedByDistance.forEach((h, idx) => {
+  // terdekat = 1, terjauh = n
+  idToDistanceScore.set(h.id, idx + 1);
+});
 
-    // Tambahkan skor lokasi berdasarkan ranking
-    const housesWithLocationScore = housesWithDistance.map(h => {
-      const rank = distanceRanks.find(r => r.id === h.id);
-      return {
-        ...h,
-        distance_score: rank?.distance_rank_score ?? 1, // fallback ke 1 kalau ga ketemu
-      };
-    });
+const housesScored = housesWithDistance.map(h => ({
+  ...h,
+  distance_score: idToDistanceScore.get(h.id) ?? 1,
+}));
 
-    // Jenis kriteria
+    // 3) Tipe kriteria
     const criteriaType: Record<string, 'benefit' | 'cost'> = {
       price: 'cost',
       land_area: 'benefit',
       building_area: 'benefit',
       bedrooms: 'benefit',
-      distance: 'cost', // <== sekarang distance jadi benefit karena skor lokasi makin tinggi makin bagus
+      distance: 'cost', // <— FIX: lokasi dianggap benefit (skor makin besar = makin bagus)
     };
 
-    // Bobot AHP (statis)
+    // 4) Bobot AHP (statis)
     const ahpWeights: Record<string, number> = {
       price: 0.627,
       land_area: 0.129,
@@ -76,30 +74,26 @@ parseFloat(h.longtitude !== null ? h.longtitude.toString() : "0"),
       distance: 0.043,
     };
 
-    // Preferensi user (dinormalisasi)
+    // 5) Bobot user dari preferensi (1–5) -> dinormalisasi
     const userRaw = dto.user_preferences ?? {};
-    const userTotal = Object.values(userRaw).reduce((acc, val) => acc + val, 0);
+    const userTotal = Object.values(userRaw).reduce((acc, v) => acc + v, 0) || 1;
     const userWeights: Record<string, number> = {};
-    for (const key in userRaw) {
-      userWeights[key] = userRaw[key] / userTotal;
-    }
+    for (const k in userRaw) userWeights[k] = userRaw[k] / userTotal;
 
-    // Hitung normalisasi (min untuk cost, max untuk benefit)
+    // 6) Faktor normalisasi (benefit = max; cost = min)
     const normalizationFactors: Record<string, number> = {};
     for (const key in criteriaType) {
-      const values = housesWithLocationScore.map(h =>
-        key === 'distance' ? h.distance_score : Number(h[key]),
+      const values = housesScored.map(h =>
+        key === 'distance' ? Number(h.distance_score) : Number((h as any)[key]),
       );
-
       normalizationFactors[key] =
-        criteriaType[key] === 'benefit'
-          ? Math.max(...values)
-          : Math.min(...values);
+        criteriaType[key] === 'benefit' ? Math.max(...values) : Math.min(...values);
     }
 
-    const alpha = 0.7; // kombinasi AHP & user (0.7 AHP, 0.3 user)
+    // 7) Campuran AHP (70%) + User (30%)
+    const alpha = 0.7;
 
-    const ranked = housesWithLocationScore.map(house => {
+    const ranked = housesScored.map(house => {
       let ahpScore = 0;
       let userScore = 0;
 
@@ -108,31 +102,30 @@ parseFloat(h.longtitude !== null ? h.longtitude.toString() : "0"),
         name: house.name,
         raw: {},
         normalized: {},
-        weighted: {
-          ahp: {},
-          user: {},
-        },
+        weighted: { ahp: {}, user: {} },
       };
 
       for (const key in criteriaType) {
         const rawValue =
-          key === 'distance' ? house.distance_score : Number(house[key]);
+          key === 'distance'
+            ? Number(house.distance_score)
+            : Number((house as any)[key]);
 
-        const normalizedValue =
+        const norm =
           criteriaType[key] === 'benefit'
             ? rawValue / normalizationFactors[key]
-            : normalizationFactors[key] / rawValue;
+            : normalizationFactors[key] / (rawValue || 1); // guard div/0
 
-        const ahpWeighted = normalizedValue * (ahpWeights[key] ?? 0);
-        const userWeighted = normalizedValue * (userWeights[key] ?? 0);
+        const wAHP = (ahpWeights[key] ?? 0) * norm;
+        const wUser = (userWeights[key] ?? 0) * norm;
 
-        ahpScore += ahpWeighted;
-        userScore += userWeighted;
+        ahpScore += wAHP;
+        userScore += wUser;
 
         debug.raw[key] = rawValue;
-        debug.normalized[key] = normalizedValue;
-        debug.weighted.ahp[key] = ahpWeighted;
-        debug.weighted.user[key] = userWeighted;
+        debug.normalized[key] = norm;
+        debug.weighted.ahp[key] = wAHP;
+        debug.weighted.user[key] = wUser;
       }
 
       const finalScore = alpha * ahpScore + (1 - alpha) * userScore;
@@ -140,26 +133,21 @@ parseFloat(h.longtitude !== null ? h.longtitude.toString() : "0"),
       debug.ahpScore = ahpScore;
       debug.userScore = userScore;
       debug.finalScore = finalScore;
-
       console.log('[DEBUG HOUSE SCORE]', JSON.stringify(debug, null, 2));
 
       return {
         ...house,
-        distance_from_campus: parseFloat(house.distance_from_campus.toFixed(2)),
+        distance_from_campus: Number(house.distance_from_campus.toFixed(2)),
         distance_score: house.distance_score,
-        ahpScore: parseFloat(ahpScore.toFixed(4)),
-        userScore: parseFloat(userScore.toFixed(4)),
-        score: parseFloat(finalScore.toFixed(4)),
+        ahpScore: Number(ahpScore.toFixed(4)),
+        userScore: Number(userScore.toFixed(4)),
+        score: Number(finalScore.toFixed(4)),
       };
     });
 
-    // Urutkan dari skor tertinggi ke terendah
+    // 8) Urutkan & beri peringkat
     ranked.sort((a, b) => b.score - a.score);
-
-    const rankedWithRank = ranked.map((h, index) => ({
-      ...h,
-      rank: index + 1,
-    }));
+    const rankedWithRank = ranked.map((h, i) => ({ ...h, rank: i + 1 }));
 
     return {
       message: 'Chart calculation success (Metode Gabungan AHP + Preferensi User)',
@@ -167,18 +155,15 @@ parseFloat(h.longtitude !== null ? h.longtitude.toString() : "0"),
     };
   }
 
-  // Rumus Haversine untuk menghitung jarak antar koordinat
+  // Haversine
   private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371; // Radius bumi (km)
-    const toRad = (deg: number) => (deg * Math.PI) / 180;
-
+    const R = 6371;
+    const toRad = (v: number) => (v * Math.PI) / 180;
     const dLat = toRad(lat2 - lat1);
     const dLon = toRad(lon2 - lon1);
-
     const a =
       Math.sin(dLat / 2) ** 2 +
       Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }
